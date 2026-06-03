@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Calculadora</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0e0e10;
+      --surface: #18181c;
+      --surface2: #222228;
+      --border: rgba(255,255,255,0.07);
+      --border-hi: rgba(255,255,255,0.14);
+      --text: #f0efe8;
+      --text-muted: #8a8a96;
+      --accent: #c8f060;
+      --accent-dim: rgba(200,240,96,0.12);
+      --accent-text: #1a2200;
+      --danger: #ff5f5f;
+      --danger-dim: rgba(255,95,95,0.12);
+      --radius: 10px;
+      --radius-lg: 16px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .calc {
+      width: 340px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+
+    .header-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .header-mode {
+      font-size: 11px;
+      color: var(--accent);
+      background: var(--accent-dim);
+      padding: 3px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.06em;
+    }
+
+    .display {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
+      min-height: 88px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: flex-end;
+      gap: 4px;
+      overflow: hidden;
+    }
+
+    .display-expr {
+      font-size: 12px;
+      color: var(--text-muted);
+      min-height: 16px;
+      word-break: break-all;
+      text-align: right;
+    }
+
+    .display-val {
+      font-size: 32px;
+      font-weight: 500;
+      color: var(--text);
+      word-break: break-all;
+      text-align: right;
+      line-height: 1.1;
+      transition: color 0.15s;
+    }
+
+    .display-val.accent { color: var(--accent); }
+
+    .fn-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .fn-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      padding: 8px 4px;
+      cursor: pointer;
+      transition: background 0.12s, color 0.12s, border-color 0.12s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .fn-btn:hover { background: rgba(255,255,255,0.05); color: var(--text); border-color: var(--border-hi); }
+    .fn-btn.active { background: var(--accent-dim); color: var(--accent); border-color: rgba(200,240,96,0.35); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+
+    .btn {
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      height: 56px;
+      font-family: 'DM Mono', monospace;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.1s, transform 0.08s, border-color 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn:active { transform: scale(0.94); }
+
+    .btn-num {
+      background: var(--surface2);
+      color: var(--text);
+      font-weight: 400;
+    }
+    .btn-num:hover { background: rgba(255,255,255,0.07); border-color: var(--border-hi); }
+
+    .btn-op {
+      background: var(--surface);
+      color: var(--text-muted);
+    }
+    .btn-op:hover { background: rgba(255,255,255,0.05); color: var(--text); border-color: var(--border-hi); }
+
+    .btn-eq {
+      background: var(--accent);
+      color: var(--accent-text);
+      border-color: transparent;
+      font-weight: 500;
+      font-size: 20px;
+    }
+    .btn-eq:hover { background: #d6f570; }
+
+    .btn-clear {
+      background: var(--danger-dim);
+      color: var(--danger);
+      border-color: rgba(255,95,95,0.2);
+    }
+    .btn-clear:hover { background: rgba(255,95,95,0.2); }
+
+    .btn-span2 { grid-column: span 2; }
+
+    .unary-tag {
+      margin-top: 8px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--accent);
+      min-height: 16px;
+      letter-spacing: 0.04em;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.04); }
+      100% { transform: scale(1); }
+    }
+
+    .pop { animation: pop 0.15s ease; }
+  </style>
+</head>
+<body>
+  <div class="calc">
+    <div class="header">
+      <span class="header-title">Calculadora</span>
+      <span class="header-mode" id="mode-tag">padrão</span>
+    </div>
+
+    <div class="display">
+      <div class="display-expr" id="expr"></div>
+      <div class="display-val" id="val">0</div>
+    </div>
+
+    <div class="fn-row">
+      <button class="fn-btn" data-op="pow" title="Potenciação">xʸ</button>
+      <button class="fn-btn" data-op="sqrt" title="Raiz Quadrada">√x</button>
+      <button class="fn-btn" data-op="log" title="Logaritmo Natural">ln(x)</button>
+      <button class="fn-btn" data-op="log10" title="Log base 10">log₁₀</button>
+    </div>
+
+    <div class="grid">
+      <button class="btn btn-clear btn-span2" id="btn-ac">AC</button>
+      <button class="btn btn-op" id="btn-back">⌫</button>
+      <button class="btn btn-op" data-basic="/">÷</button>
+
+      <button class="btn btn-num" data-digit="7">7</button>
+      <button class="btn btn-num" data-digit="8">8</button>
+      <button class="btn btn-num" data-digit="9">9</button>
+      <button class="btn btn-op" data-basic="*">×</button>
+
+      <button class="btn btn-num" data-digit="4">4</button>
+      <button class="btn btn-num" data-digit="5">5</button>
+      <button class="btn btn-num" data-digit="6">6</button>
+      <button class="btn btn-op" data-basic="-">−</button>
+
+      <button class="btn btn-num" data-digit="1">1</button>
+      <button class="btn btn-num" data-digit="2">2</button>
+      <button class="btn btn-num" data-digit="3">3</button>
+      <button class="btn btn-op" data-basic="+">+</button>
+
+      <button class="btn btn-num btn-span2" data-digit="0">0</button>
+      <button class="btn btn-num" data-digit=".">.</button>
+      <button class="btn btn-eq" id="btn-eq">=</button>
+    </div>
+
+    <div class="unary-tag" id="unary-tag"></div>
+  </div>
+
+  <script>
+    const valEl = document.getElementById('val');
+    const exprEl = document.getElementById('expr');
+    const unaryTagEl = document.getElementById('unary-tag');
+    const modeTagEl = document.getElementById('mode-tag');
+
+    let current = '0';
+    let pending = null;
+    let op = null;
+    let justEvaled = false;
+    let unaryOp = null;
+
+    const opLabels = { '+': '+', '-': '−', '*': '×', '/': '÷', pow: '^' };
+    const unaryLabels = { sqrt: '√x ativo', log: 'ln(x) ativo', log10: 'log₁₀ ativo' };
+
+    function fmt(n) {
+      if (!isFinite(n) || isNaN(n)) return 'Erro';
+      return parseFloat(n.toPrecision(12)).toString();
+    }
+
+    function updateDisplay(expr = '') {
+      valEl.textContent = current;
+      exprEl.textContent = expr;
+      unaryTagEl.textContent = unaryOp ? unaryLabels[unaryOp] : '';
+      modeTagEl.textContent = unaryOp ? unaryOp : (op ? 'operando' : 'padrão');
+      valEl.classList.toggle('accent', justEvaled && current !== '0');
+      document.querySelectorAll('.fn-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.op === unaryOp);
+      });
+    }
+
+    function popAnim(el) {
+      el.classList.remove('pop');
+      void el.offsetWidth;
+      el.classList.add('pop');
+    }
+
+    document.querySelectorAll('[data-digit]').forEach(b => {
+      b.addEventListener('click', () => {
+        popAnim(b);
+        const d = b.dataset.digit;
+        if (justEvaled) { current = d === '.' ? '0.' : d; justEvaled = false; valEl.classList.remove('accent'); }
+        else if (d === '.') { if (!current.includes('.')) current += '.'; }
+        else current = current === '0' ? d : current + d;
+        updateDisplay(exprEl.textContent);
+      });
+    });
+
+    document.querySelectorAll('[data-basic]').forEach(b => {
+      b.addEventListener('click', () => {
+        popAnim(b);
+        const sym = b.dataset.basic;
+        if (op && !justEvaled && pending !== null) {
+          current = fmt(calculate(parseFloat(pending), parseFloat(current), op));
+        }
+        pending = current;
+        op = sym;
+        justEvaled = true;
+        updateDisplay(current + ' ' + (opLabels[sym] || sym));
+      });
+    });
+
+    function calculate(a, b, o) {
+      if (o === '+') return a + b;
+      if (o === '-') return a - b;
+      if (o === '*') return a * b;
+      if (o === '/') return b === 0 ? NaN : a / b;
+      if (o === 'pow') return Math.pow(a, b);
+      return b;
+    }
+
+    document.querySelectorAll('[data-op]').forEach(b => {
+      b.addEventListener('click', () => {
+        popAnim(b);
+        const o = b.dataset.op;
+        if (o === 'sqrt' || o === 'log' || o === 'log10') {
+          unaryOp = unaryOp === o ? null : o;
+          updateDisplay(exprEl.textContent);
+        } else if (o === 'pow') {
+          if (op && !justEvaled && pending !== null) {
+            current = fmt(calculate(parseFloat(pending), parseFloat(current), op));
+          }
+          pending = current;
+          op = 'pow';
+          justEvaled = true;
+          updateDisplay(current + ' ^');
+        }
+      });
+    });
+
+    document.getElementById('btn-eq').addEventListener('click', () => {
+      popAnim(document.getElementById('btn-eq'));
+      const a = parseFloat(current);
+      let result, expr;
+
+      if (unaryOp === 'sqrt') {
+        result = a < 0 ? NaN : Math.sqrt(a);
+        expr = `√(${current}) =`;
+      } else if (unaryOp === 'log') {
+        result = a <= 0 ? NaN : Math.log(a);
+        expr = `ln(${current}) =`;
+      } else if (unaryOp === 'log10') {
+        result = a <= 0 ? NaN : Math.log10(a);
+        expr = `log₁₀(${current}) =`;
+      } else if (op && pending !== null) {
+        expr = `${pending} ${opLabels[op] || op} ${current} =`;
+        result = calculate(parseFloat(pending), a, op);
+        op = null; pending = null;
+      } else { return; }
+
+      current = fmt(result);
+      unaryOp = null;
+      justEvaled = true;
+      updateDisplay(expr);
+    });
+
+    document.getElementById('btn-ac').addEventListener('click', () => {
+      current = '0'; pending = null; op = null; justEvaled = false; unaryOp = null;
+      updateDisplay('');
+    });
+
+    document.getElementById('btn-back').addEventListener('click', () => {
+      if (justEvaled) return;
+      current = current.length > 1 ? current.slice(0, -1) : '0';
+      updateDisplay(exprEl.textContent);
+    });
+
+    document.addEventListener('keydown', e => {
+      const map = { '0':'0','1':'1','2':'2','3':'3','4':'4','5':'5','6':'6','7':'7','8':'8','9':'9','.':'.','+':'+','-':'-','*':'*','/':'/','Enter':'=','Backspace':'back','Escape':'ac' };
+      const k = map[e.key];
+      if (!k) return;
+      e.preventDefault();
+      if (k === 'ac') document.getElementById('btn-ac').click();
+      else if (k === 'back') document.getElementById('btn-back').click();
+      else if (k === '=') document.getElementById('btn-eq').click();
+      else {
+        const d = document.querySelector(`[data-digit="${k}"]`);
+        const b = document.querySelector(`[data-basic="${k}"]`);
+        if (d) d.click(); else if (b) b.click();
+      }
+    });
+
+    updateDisplay();
+  </script>
+</body>
+</html>
